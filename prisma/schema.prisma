@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["referentialIntegrity"]
+}
+
+datasource db {
+  provider             = "mysql"
+  url                  = env("DATABASE_URL")
+  shadowDatabaseUrl    = env("SHADOW_DATABASE_URL")
+  referentialIntegrity = "prisma"
+}
+
+model User {
+  id            String       @id @default(cuid())
+  createdOn     DateTime     @default(now())
+  lastUpdatedOn DateTime     @updatedAt
+  isActive      Boolean      @default(false)
+  displayName   String
+  email         String       @unique
+  events        Event[]
+  guestEvents   EventGuest[]
+
+  @@index([email, id])
+}
+
+model Event {
+  id            String       @id @default(cuid())
+  createdOn     DateTime     @default(now())
+  lastUpdatedOn DateTime     @updatedAt
+  title         String
+  description   String
+  startDateTime DateTime     @default(now())
+  endDateTime   DateTime     @default(now())
+  creator       User         @relation(fields: [creatorId], references: [id])
+  creatorId     String       @unique
+  eventGuests   EventGuest[]
+
+  @@index([id, startDateTime, endDateTime, creatorId])
+}
+
+model EventGuest {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  lastUpdatedOn DateTime @updatedAt
+  event         Event    @relation(fields: [eventId], references: [id])
+  eventId       String
+  guest         User     @relation(fields: [guestId], references: [id])
+  guestId       String
+
+  @@index([eventId, guestId])
+}
